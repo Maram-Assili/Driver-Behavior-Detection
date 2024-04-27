@@ -50,8 +50,8 @@ class DBDDataLoader:
                         print("Image read:", ctr)
                 else:
                     print(f"Skipping {image_path} due to read error")
-        X_train = np.array(X_train)
-        Y_train = np.array(Y_train)
+        X_train = np.array(X_train)/255
+        Y_train = np.array(Y_train)/255
         Y_train = self.one_hot_encode_it(Y_train)
 
         # Randomize both X_train and Y_Train
@@ -61,17 +61,27 @@ class DBDDataLoader:
 
         return X_train, Y_train
 
+data_path = "C:/Users/maram/Downloads/data-5classes/"
+image_size = (100, 100)
+classes = ['other_activities', 'safe_driving', 'talking_phone', 'texting_phone', 'turning']
+dl = DBDDataLoader(data_path, image_size, classes)
+X_train, Y_train = dl.load_data
+X_train, X_test, Y_train, Y_test = train_test_split(X_train, Y_train, test_size=0.2, random_state=42)
+print("le nombre total d'images à entrainer:", len(Y_train))
+print("le nombre total d'images à tester:", len(Y_test))
+
+
 
 # CNN model
 def create_model(input_shape, num_classes):
     model = Sequential([
-        Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+        Conv2D(8, (3, 3), activation='relu', input_shape=input_shape),
         MaxPooling2D((2, 2)),
-        Conv2D(64, (3, 3), activation='relu'),
+        Conv2D(16, (3, 3), activation='relu'),
         MaxPooling2D((2, 2)),
-        Conv2D(64, (3, 3), activation='relu'),
+        Conv2D(16, (3, 3), activation='relu'),
         Flatten(),
-        Dense(64, activation='relu'),
+        Dense(16, activation='relu'),
         Dense(num_classes, activation='softmax')
     ])
     model.compile(optimizer='adam',
@@ -81,20 +91,11 @@ def create_model(input_shape, num_classes):
 
 start = time.time()
 
-data_path = "C:/Users/maram/Downloads/data-5classes/"
-image_size = (500, 500)
-classes = ['other_activities', 'safe_driving', 'talking_phone', 'texting_phone', 'turning']
-dl = DBDDataLoader(data_path, image_size, classes)
-X_train, Y_train = dl.load_data
-
-
-X_train, X_test, Y_train, Y_test = train_test_split(X_train, Y_train, test_size=0.2, random_state=42)
-
 
 input_shape = (image_size[0], image_size[1], 3)
 num_classes = len(classes)
 model = create_model(input_shape, num_classes)
-
+model.summary()
 # Train the model
 history = model.fit(X_train, Y_train, epochs=10, batch_size=32, validation_split=0.1)
 
@@ -102,5 +103,61 @@ history = model.fit(X_train, Y_train, epochs=10, batch_size=32, validation_split
 test_loss, test_acc = model.evaluate(X_test, Y_test)
 print("Test accuracy:", test_acc)
 
+
+
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# Faire des prédictions sur les données d'entraînement
+Y_train_pred = model.predict(X_train)
+y_train_pred = np.argmax(Y_train_pred, axis=1)
+
+# Faire des prédictions sur les données de test
+Y_test_pred = model.predict(X_test)
+y_test_pred = np.argmax(Y_test_pred, axis=1)
+
+# Calculer les métriques de performance pour les données d'entraînement
+train_accuracy = accuracy_score(np.argmax(Y_train, axis=1), y_train_pred)
+train_report = classification_report(np.argmax(Y_train, axis=1), y_train_pred, target_names=classes)
+
+# Calculer les métriques de performance pour les données de test
+test_accuracy = accuracy_score(np.argmax(Y_test, axis=1), y_test_pred)
+test_report = classification_report(np.argmax(Y_test, axis=1), y_test_pred, target_names=classes)
+
+print("Performance sur les données d'entraînement :\n")
+print("Accuracy:", train_accuracy)
+print("Classification Report:\n", train_report)
+
+print("\nPerformance sur les données de test :\n")
+print("Accuracy:", test_accuracy)
+print("Classification Report:\n", test_report)
+
+
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Calculer la matrice de confusion pour les données d'entraînement
+conf_matrix_test = confusion_matrix(np.argmax(Y_test, axis=1), y_test_pred)
+
+# Visualiser la matrice de confusion des données d'entraînement sous forme de heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(conf_matrix_test, annot=True, fmt='d', cmap='Blues', xticklabels=classes, yticklabels=classes)
+plt.xlabel('Predicted labels')
+plt.ylabel('True labels')
+plt.title('Confusion Matrix - Testing Data')
+plt.show()
+
+
 end = time.time()
 print("Total time:", end - start)
+
+
+
+
+
+
+
+
+
+
+
