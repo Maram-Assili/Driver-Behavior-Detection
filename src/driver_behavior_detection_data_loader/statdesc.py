@@ -13,6 +13,7 @@ plt.show()
 
 
 
+
 # Afficher des exemples d'images pour lesquelles le modèle s'est trompé
 incorrect_indices = np.where(Y_pred_classes != Y_true_classes)[0]
 plt.figure(figsize=(10, 8))
@@ -27,22 +28,6 @@ plt.show()
 
 
 
-
-import os
-import matplotlib.pyplot as plt
-
-# Chemin vers le répertoire contenant les données
-data_path = "C:/Users/maram/Downloads/data-5classes/"
-
-# Compter le nombre d'images dans chaque classe
-class_image_counts = {}
-for cls in classes:
-    class_path = os.path.join(data_path, cls)
-    if os.path.isdir(class_path):
-        class_images = os.listdir(class_path)
-        class_image_counts[cls] = len(class_images)
-    else:
-        print(f"Le répertoire {class_path} n'existe pas.")
 
 # Créer un diagramme à barres pour visualiser le nombre d'images dans chaque classe
 plt.figure(figsize=(10, 6))
@@ -61,3 +46,20 @@ for bar in bars:
 plt.show()
 
 
+import numpy as np
+
+# Calculer les statistiques de base des valeurs de pixels dans les images
+mean_pixels = np.mean(X_train)
+std_pixels = np.std(X_train)
+median_pixels = np.median(X_train)
+min_pixels = np.min(X_train)
+max_pixels = np.max(X_train)
+
+# Afficher les statistiques
+print("Statistiques de base des valeurs de pixels dans les images :")
+print("--------------------------------------------------------")
+print("Moyenne des pixels :", mean_pixels)
+print("Écart-type des pixels :", std_pixels)
+print("Médiane des pixels :", median_pixels)
+print("Minimum des pixels :", min_pixels)
+print("Maximum des pixels :", max_pixels)
