@@ -1,6 +1,8 @@
+
 import os
 import cv2
 import numpy as np
+import random
 from sklearn.metrics import accuracy_score
 
 # Define the folder path containing the new images
@@ -23,7 +25,6 @@ random.shuffle(installed_images_paths)
 # Load and preprocess the images
 installed_images = []
 image_size = (100, 100)
-
 for image_path in installed_images_paths:
     image = cv2.imread(image_path)
     if image is not None:  # Check if the image was loaded successfully
@@ -40,7 +41,7 @@ else:
     installed_images = np.array(installed_images)
 
     # Make predictions on the installed images
-    predictions = model.predict(installed_images)
+    predictions = model_VGG.predict(installed_images)  # Utilisez votre modèle ici
     # Get the predicted classes for each image
     predicted_classes = np.argmax(predictions, axis=1)
     # List to store predicted labels for each image
@@ -49,27 +50,18 @@ else:
     # Display images with their predictions
     print("\nImages with their predictions:")
     for idx, image_path in enumerate(installed_images_paths):
-        prediction = classes[predicted_classes[idx]]  # Use classes list to map predicted class index to label
-        predicted_labels.append(prediction)
+        prediction = predicted_labels[idx]
         print(f"Image {idx + 1}: {image_path}, Prediction: {prediction}")
-
-    # Extract file names from true labels (full file paths)
+   # Extract file names from true labels (full file paths)
     true_file_names = [os.path.basename(image_path).split('.')[0] for image_path in installed_images_paths]
     # Create a list of tuples containing the true file names and their corresponding predicted labels
     true_predicted_pairs = list(zip(true_file_names, predicted_labels))
-    # Initialize a counter for correct predictions
-    correct_predictions = 0
-
-    # Iterate over the list of true-predicted pairs
-    for true_file_name, predicted_label in true_predicted_pairs:
-        # Split the true file name and predicted label to get the first word
-        true_base_name = true_file_name.split('_')[0]
-        predicted_base_name = predicted_label.split('_')[0]
-        # Check if the predicted label matches the true base name
-        if true_base_name == predicted_base_name:
-            correct_predictions += 1
 
     # Calculate accuracy
-    accuracy = correct_predictions / len(true_predicted_pairs)
+    true_labels = [filename.split('_')[0] for filename in true_file_names]
+    predicted_labels = [label.split('_')[0] for label in predicted_labels]
+    accuracy = accuracy_score(true_labels, predicted_labels)
     print("Accuracy:", accuracy)
+
+
 

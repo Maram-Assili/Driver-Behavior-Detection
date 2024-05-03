@@ -1,15 +1,11 @@
-import os
-import random
-import time
-
 import cv2
+import os
+import time
 import numpy as np
+import random
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.model_selection import train_test_split
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-class DBDDataLoader:
+class ddbdata_loader:
     def __init__(self, data_path, image_size, classes):
         self.data_path = data_path
         self.image_size = image_size
@@ -17,147 +13,167 @@ class DBDDataLoader:
 
     def read_image(self, image_path):
         image = cv2.imread(image_path)
-        try:
-            resized_image = cv2.resize(image, self.image_size)
-        except:
-            resized_image = image
+        resized_image = cv2.resize(image, self.image_size)
+         #try:
+         #except:
+         #   resized_image = image
         return resized_image
+
+
 
     @staticmethod
     def one_hot_encode_it(vector):
         vector = vector.reshape(-1, 1)
-        encoder = OneHotEncoder(sparse=False)
+        encoder = OneHotEncoder()
         one_hot_encoded_vector = encoder.fit_transform(vector)
-        return one_hot_encoded_vector
+        return one_hot_encoded_vector.toarray()
 
-    @property
     def load_data(self):
         files = os.listdir(self.data_path)
         ctr = 0
         X_train, Y_train = [], []
+        err = 0
         for f in files:
-            class_path = os.path.join(self.data_path, f)
+            class_path = f"{self.data_path}{f}/"
             files_per_class = os.listdir(class_path)
             for img_f in files_per_class:
-                image_path = os.path.join(class_path, img_f)
-                image = self.read_image(image_path)
-                if image is not None:
+                image_path = f"{self.data_path}{f}/{img_f}"
+                try:
+                    image = self.read_image(image_path)
                     X_train.append(image)
                     cls = self.classes.index(f)
                     Y_train.append(cls)
-                    ctr += 1
-                    if ctr % 500 == 0:
-                        print("Image read:", ctr)
-                else:
-                    print(f"Skipping {image_path} due to read error")
+                except:
+                    err+=1
+                    print("err:", err)
+                ctr += 1
+                if ctr % 100 == 0:
+                    print(f"image read: {ctr}/{len(files_per_class)}")
         X_train = np.array(X_train)/255
         Y_train = np.array(Y_train)/255
         Y_train = self.one_hot_encode_it(Y_train)
 
-        # Randomize both X_train and Y_Train
-        combined_data = list(zip(X_train, Y_train))
+        # add randomization to both X_train and Y_Train
+        combined_data = list(zip(X_train,Y_train))
         random.shuffle(combined_data)
-        X_train[:], Y_train[:] = zip(*combined_data)
-
+        X_train[:],Y_train[:]=zip(*combined_data)
         return X_train, Y_train
 
-data_path = "C:/Users/maram/Downloads/data-5classes/"
-image_size = (100, 100)
-classes = ['other_activities', 'safe_driving', 'talking_phone', 'texting_phone', 'turning']
-dl = DBDDataLoader(data_path, image_size, classes)
-X_train, Y_train = dl.load_data
-X_train, X_test, Y_train, Y_test = train_test_split(X_train, Y_train, test_size=0.2, random_state=42)
-print("le nombre total d'images à entrainer:", len(Y_train))
-print("le nombre total d'images à tester:", len(Y_test))
-
-
-
-# CNN model
-def create_model(input_shape, num_classes):
-    model = Sequential([
-        Conv2D(8, (3, 3), activation='relu', input_shape=input_shape),
-        MaxPooling2D((2, 2)),
-        Conv2D(16, (3, 3), activation='relu'),
-        MaxPooling2D((2, 2)),
-        Conv2D(16, (3, 3), activation='relu'),
-        Flatten(),
-        Dense(16, activation='relu'),
-        Dense(num_classes, activation='softmax')
-    ])
-    model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
-    return model
-
 start = time.time()
+data_path = "C:/Users/maram/Downloads/data-5classes/"
+print(os.listdir(data_path))
+image_size = (100,100)
+classes = ['other_activities', 'safe_driving', 'talking_phone', 'texting_phone', 'turning']
+dl = ddbdata_loader(data_path, image_size, classes)
+X_train, Y_train = dl.load_data()
+
+print(len(X_train))
+print(len(Y_train))
+
+from sklearn.model_selection import train_test_split
+# Divisez les données en ensembles d'entraînement, de test et de validation
+X_train, X_remaining, Y_train, Y_remaining = train_test_split(X_train, Y_train, test_size=0.25, random_state=42)
+X_test, X_valid, Y_test, Y_valid = train_test_split(X_remaining, Y_remaining, test_size=0.2,random_state=42)
 
 
-input_shape = (image_size[0], image_size[1], 3)
-num_classes = len(classes)
-model = create_model(input_shape, num_classes)
-model.summary()
-# Train the model
-history = model.fit(X_train, Y_train, epochs=10, batch_size=32, validation_split=0.1)
+print(len(X_train))
+print(len(X_remaining))
+print(len(X_valid))
 
-# Evaluate the model
-test_loss, test_acc = model.evaluate(X_test, Y_test)
+from tensorflow.keras import layers, models, Input, Model
+
+def VGGNet():
+    inp = layers.Input((100, 100, 3))
+    x = layers.Conv2D(4, 3, 1, activation='relu')(inp)
+    x = layers.Conv2D(4, 3, 1, activation='relu')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.MaxPooling2D(2, 2)(x)
+    x = layers.Conv2D(8, 3, 1, activation='relu')(x)
+    x = layers.Conv2D(8, 3, 1, activation='relu')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.MaxPooling2D(2, 2)(x)
+    x = layers.Conv2D(16, 3, 1, activation='relu')(x)
+    x = layers.Conv2D(16, 3, 1, activation='relu')(x)
+    x = layers.Conv2D(16, 3, 1, activation='relu')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.MaxPooling2D(2, 2)(x)
+    x = layers.Conv2D(32, 3, 1, activation='relu')(x)
+    x = layers.Conv2D(32, 3, 1, activation='relu')(x)
+    x = layers.Conv2D(32, 3, 1, activation='relu')(x)
+    x = layers.MaxPooling2D(2, 2)(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(256, activation='relu')(x)
+    x = layers.Dropout(0.5)(x)
+    x = layers.Dense(256, activation='relu')(x)
+    x = layers.Dropout(0.5)(x)
+    x = layers.Dense(5, activation='softmax')(x)
+
+    model_VGG = models.Model(inputs=inp, outputs=x)
+
+    return model_VGG
+
+model_VGG = VGGNet()
+model_VGG.summary()
+
+
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import BinaryCrossentropy
+
+model_VGG.compile(loss=BinaryCrossentropy(),
+              optimizer=Adam(learning_rate=0.001), metrics=['accuracy'])
+
+# Entraînement du modèle
+history = model_VGG.fit(X_train, Y_train, epochs=10, validation_data=(X_valid, Y_valid))
+
+# Évaluation du modèle
+test_loss, test_acc = model_VGG.evaluate(X_test, Y_test)
 print("Test accuracy:", test_acc)
-
-
-
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-
-# Faire des prédictions sur les données d'entraînement
-Y_train_pred = model.predict(X_train)
-y_train_pred = np.argmax(Y_train_pred, axis=1)
-
-# Faire des prédictions sur les données de test
-Y_test_pred = model.predict(X_test)
-y_test_pred = np.argmax(Y_test_pred, axis=1)
-
-# Calculer les métriques de performance pour les données d'entraînement
-train_accuracy = accuracy_score(np.argmax(Y_train, axis=1), y_train_pred)
-train_report = classification_report(np.argmax(Y_train, axis=1), y_train_pred, target_names=classes)
-
-# Calculer les métriques de performance pour les données de test
-test_accuracy = accuracy_score(np.argmax(Y_test, axis=1), y_test_pred)
-test_report = classification_report(np.argmax(Y_test, axis=1), y_test_pred, target_names=classes)
-
-print("Performance sur les données d'entraînement :\n")
-print("Accuracy:", train_accuracy)
-print("Classification Report:\n", train_report)
-
-print("\nPerformance sur les données de test :\n")
-print("Accuracy:", test_accuracy)
-print("Classification Report:\n", test_report)
-
-
+print("Loss sur les données de test:", test_loss)
 
 
 import matplotlib.pyplot as plt
-import seaborn as sns
-# Calculer la matrice de confusion pour les données d'entraînement
-conf_matrix_test = confusion_matrix(np.argmax(Y_test, axis=1), y_test_pred)
 
-# Visualiser la matrice de confusion des données d'entraînement sous forme de heatmap
-plt.figure(figsize=(10, 8))
-sns.heatmap(conf_matrix_test, annot=True, fmt='d', cmap='Blues', xticklabels=classes, yticklabels=classes)
-plt.xlabel('Predicted labels')
-plt.ylabel('True labels')
-plt.title('Confusion Matrix - Testing Data')
+# Extraire l'historique de l'entraînement
+train_loss = history.history['loss']
+val_loss = history.history['val_loss']
+train_accuracy = history.history['accuracy']
+val_accuracy = history.history['val_accuracy']
+
+# Tracer les courbes de perte
+plt.plot(train_loss, label='Training Loss')
+plt.plot(val_loss, label='Validation Loss')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
 plt.show()
 
+# Tracer les courbes d'exactitude
+plt.plot(train_accuracy, label='Training Accuracy')
+plt.plot(val_accuracy, label='Validation Accuracy')
+plt.title('Training and Validation Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
 
-end = time.time()
-print("Total time:", end - start)
+from sklearn.metrics import classification_report, confusion_matrix
 
+# Prédiction sur l'ensemble de test
+Y_pred = model_VGG.predict(X_test)
+Y_pred_classes = np.argmax(Y_pred, axis=1)
 
+# Convertir les étiquettes de test en classes
+Y_true_classes = np.argmax(Y_test, axis=1)
 
+# Rapport de classification
+print("Rapport de classification :")
+print(classification_report(Y_true_classes, Y_pred_classes, target_names=classes))
 
-
-
-
-
+# Matrice de confusion
+print("Matrice de confusion :")
+conf_matrix = confusion_matrix(Y_true_classes, Y_pred_classes)
+print(conf_matrix)
 
 
 
