@@ -42,7 +42,7 @@ model_VGG.compile(loss=BinaryCrossentropy(),
               optimizer=Adam(learning_rate=0.001), metrics=['accuracy'])
 
 # Entraînement du modèle
-history = model_VGG.fit(X_train, Y_train, epochs=10, validation_data=(X_valid, Y_valid))
+history = model_VGG.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
 
 # Évaluation du modèle
 test_loss, test_acc = model_VGG.evaluate(X_test, Y_test)
@@ -94,3 +94,32 @@ print("Matrice de confusion :")
 conf_matrix = confusion_matrix(Y_true_classes, Y_pred_classes)
 print(conf_matrix)
 
+
+
+
+
+
+# Prédiction sur l'ensemble de validation
+Y_valid_pred = model_VGG.predict(X_valid)
+Y_valid_pred_classes = np.argmax(Y_valid_pred, axis=1)
+# Convertir les étiquettes de validation en classes
+Y_valid_true_classes = np.argmax(Y_valid, axis=1)
+# Rapport de classification pour la validation
+print("Rapport de classification pour la validation:")
+print(classification_report(Y_valid_true_classes, Y_valid_pred_classes, target_names=classes))
+# Matrice de confusion pour la validation
+print("Matrice de confusion pour la validation:")
+conf_matrix_valid = confusion_matrix(Y_valid_true_classes, Y_valid_pred_classes)
+print(conf_matrix_valid)
+# Calcul de l'accuracy pour la validation
+accuracy_valid = np.sum(Y_valid_true_classes == Y_valid_pred_classes) / len(Y_valid_true_classes)
+print("Accuracy pour la validation:", accuracy_valid)
+# Affichage de quelques images avec leurs prédictions
+num_images_to_display = 5
+plt.figure(figsize=(15, 5))
+for i in range(num_images_to_display):
+    plt.subplot(1, num_images_to_display, i + 1)
+    plt.imshow(X_valid[i])
+    plt.title(f"Prédiction: {classes[Y_valid_pred_classes[i]]}\nVérité: {classes[Y_valid_true_classes[i]]}")
+    plt.axis('off')
+plt.show()
