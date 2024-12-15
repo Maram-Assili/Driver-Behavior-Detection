@@ -1,5 +1,7 @@
 
 from tensorflow.keras import layers, models, Input, Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import CategoricalCrossentropy
 
 def VGGNet():
     inp = layers.Input((100, 100, 3))
@@ -35,10 +37,8 @@ model_VGG = VGGNet()
 model_VGG.summary()
 
 
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import BinaryCrossentropy
 
-model_VGG.compile(loss=BinaryCrossentropy(),
+model_VGG.compile(loss=CategoricalCrossentropy(),
               optimizer=Adam(learning_rate=0.001), metrics=['accuracy'])
 
 # Entraînement du modèle
