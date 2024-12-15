@@ -3,51 +3,65 @@ from tensorflow.keras import layers, models, Input, Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import CategoricalCrossentropy
 
-def VGGNet():
+
+def VGGNet16():
     inp = layers.Input((100, 100, 3))
-    x = layers.Conv2D(4, 3, 1, activation='relu')(inp)
-    x = layers.Conv2D(4, 3, 1, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
+
+    # Bloc 1 (Couches convolutionnelles et MaxPooling)
+    x = layers.Conv2D(8, 3, padding='same', activation='relu')(inp)
+    x = layers.Conv2D(8, 3, padding='same', activation='relu')(x)
     x = layers.MaxPooling2D(2, 2)(x)
-    x = layers.Conv2D(8, 3, 1, activation='relu')(x)
-    x = layers.Conv2D(8, 3, 1, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
+
+    # Bloc 2 (Couches convolutionnelles et MaxPooling)
+    x = layers.Conv2D(16, 3, padding='same', activation='relu')(x)
+    x = layers.Conv2D(16, 3, padding='same', activation='relu')(x)
     x = layers.MaxPooling2D(2, 2)(x)
-    x = layers.Conv2D(16, 3, 1, activation='relu')(x)
-    x = layers.Conv2D(16, 3, 1, activation='relu')(x)
-    x = layers.Conv2D(16, 3, 1, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
+
+    # Bloc 3 (Couches convolutionnelles et MaxPooling)
+    x = layers.Conv2D(32, 3, padding='same', activation='relu')(x)
+    x = layers.Conv2D(32, 3, padding='same', activation='relu')(x)
+    x = layers.Conv2D(32, 3, padding='same', activation='relu')(x)
     x = layers.MaxPooling2D(2, 2)(x)
-    x = layers.Conv2D(32, 3, 1, activation='relu')(x)
-    x = layers.Conv2D(32, 3, 1, activation='relu')(x)
-    x = layers.Conv2D(32, 3, 1, activation='relu')(x)
+
+    # Bloc 4 (Couches convolutionnelles et MaxPooling)
+    x = layers.Conv2D(64, 3, padding='same', activation='relu')(x)
+    x = layers.Conv2D(64, 3, padding='same', activation='relu')(x)
+    x = layers.Conv2D(64, 3, padding='same', activation='relu')(x)
     x = layers.MaxPooling2D(2, 2)(x)
+
+    # Bloc 5 (Couches convolutionnelles et MaxPooling)
+    x = layers.Conv2D(128, 3, padding='same', activation='relu')(x)
+    x = layers.Conv2D(128, 3, padding='same', activation='relu')(x)
+    x = layers.Conv2D(128, 3, padding='same', activation='relu')(x)
+    x = layers.MaxPooling2D(2, 2)(x)
+
+    # Couches Fully Connected
     x = layers.Flatten()(x)
-    x = layers.Dense(256, activation='relu')(x)
+    x = layers.Dense(512, activation='relu')(x)
     x = layers.Dropout(0.5)(x)
-    x = layers.Dense(256, activation='relu')(x)
+    x = layers.Dense(512, activation='relu')(x)
     x = layers.Dropout(0.5)(x)
     x = layers.Dense(5, activation='softmax')(x)
 
-    model_VGG = models.Model(inputs=inp, outputs=x)
+    model_VGG16 = models.Model(inputs=inp, outputs=x)
 
-    return model_VGG
+    return model_VGG16
 
-model_VGG = VGGNet()
+
+model_VGG = VGGNet16()
 model_VGG.summary()
 
-
-
 model_VGG.compile(loss=CategoricalCrossentropy(),
-              optimizer=Adam(learning_rate=0.001), metrics=['accuracy'])
+                  optimizer=Adam(learning_rate=0.001), metrics=['accuracy'])
 
-# Entraînement du modèle
+# Assurez-vous que X_train, Y_train, X_valid, Y_valid, X_test, Y_test sont définis correctement avant l'entraînement.
 history = model_VGG.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
 
 # Évaluation du modèle
 test_loss, test_acc = model_VGG.evaluate(X_test, Y_test)
 print("Test accuracy:", test_acc)
 print("Loss sur les données de test:", test_loss)
+
 
 
 import matplotlib.pyplot as plt
