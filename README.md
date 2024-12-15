@@ -11,10 +11,10 @@ Ce projet a pour objectif de développer un système de détection des comportem
 
 - Langage de Programmation : Python
 - Bibliothèques :
-+ TensorFlow/Keras : Pour la création et l'entraînement du modèle CNN basé sur VGGNet.
-+ OpenCV : Pour le traitement des images .
-+ NumPy et Pandas : Pour la manipulation et l'analyse des données.
-+ Ensemble de Données : Un jeu de données contenant des séquences vidéo annotées avec les comportements de conduite observés.
+ + TensorFlow/Keras : Pour la création et l'entraînement du modèle CNN basé sur VGGNet.
+ + OpenCV : Pour le traitement des images .
+ + NumPy et Pandas : Pour la manipulation et l'analyse des données.
+- Ensemble de Données : Un jeu de données contenant des séquences vidéo annotées avec les comportements de conduite observés.
   
 ## Méthodologie
 
